@@ -4,6 +4,8 @@ import numpy as np
 import math
 import time
 from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
+
 import Loading_Datasets
 
 import random
@@ -70,21 +72,6 @@ class Network:
                 self.biases[i] = bias_vector
                 # self.biases.append(bias_vector)
 
-        # print(self.weights)        
-        # print(self.weights[0]) 
-        # print("*****************")       
-        # print(self.weights[1])  
-        # print("*****************")       
-        # print(self.weights[2])    
-        # print("*****************")       
-
-        # print(len(self.weights[0]))        
-        # print(len(self.weights[0][0]))        
-        # print(len(self.weights[1]))        
-        # print(len(self.weights[1][0]))        
-        # print(len(self.weights[2]))        
-        # print(len(self.weights[2][0]))        
-        # print(self.weights)        
 
     def sigmoid(self, x):
         return 1 / (1 + math.e ** -x)
@@ -104,8 +91,6 @@ class Network:
             b = self.biases[i]
             tmp = np.dot(w, a) + b
             a = self.sigmoid(tmp)
-        # print(len(a))
-        # print(len(a[0]))
         self.z.append(tmp)
         self.neuron_values.append(a)
         return a
@@ -124,33 +109,7 @@ class Network:
     def forward_propagation_with_hidden_layer(self, a):
         for i in range(len(self.hidden_layer) + 1):
             a = self.feed_forward(a, i)
-            # print("+++")
-            # print(len(self.neuron_values[i]),len(self.neuron_values[i][0]))
-            # print(len(self.z[i]),len(self.z[i][0]))
-        # print("self.neuron_values[0]")
-        # print(self.neuron_values[0])
-        # print("self.neuron_values[1]")
-        # print(self.neuron_values[1])
-        # print("self.neuron_values[2]")
-        # print(self.neuron_values[2])
-        # print("self.neuron_values[3]")
-        # print(self.neuron_values[3])   
 
-
-        # print("*******************")
-        # print(len(self.neuron_values))
-        
-        # print(len(self.z))
-        # print("self.z[0]")
-        # print(self.z[0])
-        # print("self.z[1]")
-        # print(self.z[1])
-        # print("self.z[2]")
-        # print(self.z[2])
-        # print("self.z[3]")
-        # print(self.z[3])           
-        
-        
         
         return a
 #######################################################################
@@ -203,17 +162,7 @@ class Network:
         return layer_gradients
 
     def backward_propagation_gradiant(self,data,result,label):
-        # result = [1,0,0,0]
-        # self.grad_w = []
-        # self.grad_b = []
-        # print(len(self.z))
-        # print(self.z[0])
-        # print(self.z[1])
-        # print(self.z[2])
-        # print(self.z[3])
-        # for k in range(0, len(self.hidden_layer)+1):
-        #     self.grad_w.append(np.zeros_like(self.weights[k]))
-        #     self.grad_b.append(np.zeros_like(self.biases[k]))
+
         gradient_w1 = np.zeros((self.hidden_layer[0], self.input_layer))
         gradient_w2 = np.zeros((self.hidden_layer[1], self.hidden_layer[0]))
         gradient_w3 = np.zeros((self.output_layer, self.hidden_layer[1]))
@@ -223,23 +172,12 @@ class Network:
         gradient_b1 = np.zeros((self.hidden_layer[0],1))
         gradient_b2 = np.zeros((self.hidden_layer[1],1))
         gradient_b3 = np.zeros((self.output_layer,1))
-        # print("********")
-        # print(result)
-        # print(label)
 
-
-
-
-        # return gradient_b1,gradient_b1
         for layer in range(len(self.hidden_layer)+1,0,-1):
             if layer == 1:
                 sigprim_z1 = []
                 for x in self.z[1]:
-                    # print(x[0])
                     sigprim_z1.append(self.sigmoid_prime(x[0]))
-                # temp = [a*b for a,b in zip(gradient_a1,res)]
-                # print(len(temp),len(temp[0]))
-                # print("***********")
                 for m in range(self.hidden_layer[0]):
                         gradient_b1[m,0] += gradient_a1[m,0] * sigprim_z1[m]
 
@@ -247,23 +185,12 @@ class Network:
                     for v in range(self.input_layer):
                         gradient_w1[m][v] += gradient_b1[m,0] * self.neuron_values[0][v]
 
-                # print("gradient_w1")
-                # print(gradient_w1)
-                # print("gradient_b1")
-                # print(gradient_b1)
-                # gradient_b0 = temp
-                # # gradient_b0 = gradient_a1 * res
-                # gradient_w0 = gradient_b0 @ np.transpose(data[0])        
-
-
 
             if layer == 2:
                 sigprim_z2 = []
                 for x in self.z[2]:
                     # print(x[0])
                     sigprim_z2.append(self.sigmoid_prime(x[0]))
-                # temp = [a*b for a,b in zip(gradient_a2,res)]
-                # gradient_b1 = gradient_a2 * res
                 for k in range(self.hidden_layer[1]):
                     gradient_b2[k,0] += gradient_a2[k,0] * sigprim_z2[k]
                 
@@ -272,112 +199,94 @@ class Network:
                         gradient_w2[k, m] += gradient_b2[k,0] * self.neuron_values[1][m]
 
                 for k in range(self.hidden_layer[0]):
-                    for j in range(self.output_layer):
-                        gradient_a1[k,0] += gradient_b3[j,0] * self.weights[layer-1][j][k]
-
-                # print("gradient_w2")
-                # print(gradient_w2)
-                # print("gradient_b2")
-                # print(gradient_b2)
-
-                # gradient_b1 = temp
-                # gradient_w1 = gradient_b1 @ np.transpose(self.neuron_values[1])
-                # gradient_a1 = np.transpose(self.weights[1]) @ gradient_b1 
-
+                    for j in range(self.hidden_layer[1]):
+                        gradient_a1[k,0] += gradient_b2[j,0] * self.weights[layer-1][j][k]
 
 
             if layer == 3:
                 sigprim_z3 = []
                 for x in self.z[3]:
-                    # print(x[0])
                     sigprim_z3.append(self.sigmoid_prime(x[0]))
-                # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-                # print(self.z[3])
-                # print(np.subtract(result,label))
-                # print(sigprim_z3)
-                temp = [a*b for a,b in zip(sigprim_z3,np.subtract(result,label))]
-                # print(temp)
                 for j in range(self.output_layer):
-                    gradient_b3[j,0] += 2 * temp[j]
-                # print(gradient_b2)
-                # print(len(self.neuron_values[2]),len(self.neuron_values[2][0]))
-                # gradient_w3 = gradient_b3 @ np.transpose(self.neuron_values[2])
+                    gradient_b3[j,0] += 2 * sigprim_z3[j] * (result[j] - label[j])
                 for j in range(self.output_layer):
                     for k in range(self.hidden_layer[1]):
                         gradient_w3[j, k] += gradient_b3[j,0] * self.neuron_values[2][k]
-                # print(len(gradient_w3),len(gradient_w3[0]))
-                # print(gradient_w3)
                 for k in range(self.hidden_layer[1]):
                     for j in range(self.output_layer):
-                        # gradient_a2[k,0]
-                        # gradient_b3[j,0]
-                        # self.weights[k-1]
-                        # self.weights[k-1][j]
-                        # self.weights[k-1][j][k]
                         gradient_a2[k,0] += gradient_b3[j,0] * self.weights[layer-1][j][k]
-
-                # print("gradient_w3")
-                # print(gradient_w3)
-                # print("gradient_b3")
-                # print(gradient_b3)
-
-                # return gradient_b1,gradient_b1
-
-                # print(len(gradient_b2),len(gradient_b2[0]))
-                # print(len(self.neuron_values[2][0]),len(self.neuron_values[2]))
-
-
-
 
         self.grad_w = [gradient_w1,gradient_w2,gradient_w3]
         self.grad_b = [gradient_b1,gradient_b2,gradient_b3]
-        # self.grad_w.append(gradient_w0)
-        # self.grad_w.append(gradient_w1)
-        # self.grad_w.append(gradient_w2)
-        # self.grad_b.append(gradient_b0)
-        # self.grad_b.append(gradient_b1)
-        # self.grad_b.append(gradient_b2)
         return self.grad_w,self.grad_b
 
 
 
-    def update_weights_and_biases(self, data_gradients, n, learning_rate):
-        a = len(self.neuron_values)
-        for i in range(a - 1):
-            w_matrix = np.zeros(self.weights[i].shape)
-            for j in range(n):
-                w_matrix += data_gradients[j][a - 1 - i - 1][0][0]
-            w_matrix = w_matrix * learning_rate / n
-            self.weights[i] -= w_matrix
-
-            b_matrix = np.zeros(self.biases[i].shape)
-            for j in range(n):
-                b_matrix += data_gradients[j][a - 1 - i - 1][1][0]
-            b_matrix = b_matrix * learning_rate / n
-            self.biases[i] -= b_matrix
 
 
-    def training(self,train_data,learning_rate, batch_size, epoch):
-        for i in range(epoch):
-            epoch_cost = 0
-            epoch_correct_res = 0
-            random.shuffle(train_data)  
-            batched_train = [train_data[j:j + batch_size] for j in range(0, len(train_data), batch_size)]
-            for batch in batched_train:
-                self.grad_w = []
-                self.grad_b = []
-                for k in range(len(self.hidden_layer)+1):
-                    self.grad_w.append(np.zeros_like(self.weights[k]))
-                    self.grad_b.append(np.zeros_like(self.biases[k]))
-                batch_len = len(batch)
-                for data in batch:
-                    result_array = self.forward_propagation(data[0])
-                    flattened  = [val for sublist in result_array for val in sublist]
-                    result = flattened.index(max(flattened))
-                for k in range(len(self.hidden_layer)+1):
-                    self.weights[k] -= learning_rate * self.grad_w[k] / batch_len
-                    self.biases[k] -= learning_rate * self.grad_b[k] / batch_len
-                    
+
+
+    def backward_propagation_gradiant_Vectorization(self,data,result,label):
+
+        gradient_w1 = np.zeros((self.hidden_layer[0], self.input_layer))
+        gradient_w2 = np.zeros((self.hidden_layer[1], self.hidden_layer[0]))
+        gradient_w3 = np.zeros((self.output_layer, self.hidden_layer[1]))
+        gradient_a2 = np.zeros((self.hidden_layer[1],1))
+        gradient_a1 = np.zeros((self.hidden_layer[0],1))
+        
+        gradient_b1 = np.zeros((self.hidden_layer[0],1))
+        gradient_b2 = np.zeros((self.hidden_layer[1],1))
+        gradient_b3 = np.zeros((self.output_layer,1))
+
+        for layer in range(len(self.hidden_layer)+1,0,-1):
+            if layer == 1:
+                sigprim_z1 = []
+                for x in self.z[1]:
+                    sigprim_z1.append(self.sigmoid_prime(x[0]))
+                for m in range(self.hidden_layer[0]):
+                        gradient_b1[m,0] += gradient_a1[m,0] * sigprim_z1[m]
+
+                for m in range(self.hidden_layer[0]):
+                    for v in range(self.input_layer):
+                        gradient_w1[m][v] += gradient_b1[m,0] * self.neuron_values[0][v]
+
+
+            if layer == 2:
+                sigprim_z2 = []
+                for x in self.z[2]:
+                    # print(x[0])
+                    sigprim_z2.append(self.sigmoid_prime(x[0]))
+                for k in range(self.hidden_layer[1]):
+                    gradient_b2[k,0] += gradient_a2[k,0] * sigprim_z2[k]
+                
+                for k in range(self.hidden_layer[1]):
+                    for m in range(self.hidden_layer[0]):
+                        gradient_w2[k, m] += gradient_b2[k,0] * self.neuron_values[1][m]
+
+                for k in range(self.hidden_layer[0]):
+                    for j in range(self.hidden_layer[1]):
+                        gradient_a1[k,0] += gradient_b2[j,0] * self.weights[layer-1][j][k]
+
+
+            if layer == 3:
+                sigprim_z3 = []
+                for x in self.z[3]:
+                    sigprim_z3.append(self.sigmoid_prime(x[0]))
+                for j in range(self.output_layer):
+                    gradient_b3[j,0] += 2 * sigprim_z3[j] * (result[j] - label[j])
+                for j in range(self.output_layer):
+                    for k in range(self.hidden_layer[1]):
+                        gradient_w3[j, k] += gradient_b3[j,0] * self.neuron_values[2][k]
+                for k in range(self.hidden_layer[1]):
+                    for j in range(self.output_layer):
+                        gradient_a2[k,0] += gradient_b3[j,0] * self.weights[layer-1][j][k]
+
+        self.grad_w = [gradient_w1,gradient_w2,gradient_w3]
+        self.grad_b = [gradient_b1,gradient_b2,gradient_b3]
+        return self.grad_w,self.grad_b
+
+
+
 
 
 
@@ -435,7 +344,6 @@ class Network:
 
 def main(part):
     print('Welcome to the Artificial Neural Network Classifier!')
-    # time.sleep(0.8)
     train_data , test_data = Loading_Datasets.loading_dataset()
     network = Network(102, [150,60], 4, "sigmoid")
     network.fill_weights_and_biases()
@@ -451,12 +359,12 @@ def main(part):
 
 
     if part == 2:
-        # network.training(train_data, epoch=20, batch_size=16, learning_rate=0.6)
-        epoch=5
+        epoch=10
         batch_size=10
         learning_rate=1
         costs = []
         ts = train_data[:200]
+        error = []
 
         for i in range(epoch):
             epoch_cost = 0
@@ -464,8 +372,8 @@ def main(part):
             random.shuffle(ts)  
             # ts = train_data
             batched_train = [ts[j:j + batch_size] for j in range(0, len(ts), batch_size)]            
-            error = []
             print("*********************************************")
+            sum = 0
             for batch in batched_train:
                 w_gradients = []
                 b_gradients = []
@@ -474,7 +382,7 @@ def main(part):
                     b_gradients.append(np.zeros_like(network.biases[k]))
  
 
-                sum = 0
+                
                 results = [] #contain indices of maximum element from forward_propagation
                 # return
                 for data in batch:
@@ -485,125 +393,41 @@ def main(part):
                     # print("***")
 
                     flattened_result  = [val for sublist in result for val in sublist]
-                    # print(flattened_result.index(max(flattened_result)))
-                    # print(flattened_result.index(max(flattened_result)))
-                    # print(flattened_result)
-                    # print(label)
-                    # print(flattened_labels)
 
                     results.append(flattened_result.index(max(flattened_result)))
 
-                    # temp = network.neuron_values[network.neuron_values[len(network.hidden_layer)+1]]
                     s = list(np.array(flattened_result) - np.array(flattened_labels))
                     # print(s)
 
                     sum += (np.dot(s,s))
-                    # print(sum)
-                    # print(data)
-                    # print(result)
-                    # print(label)
+
                     # result as list of one element in list
                     gw,gb = network.backward_propagation_gradiant(data,flattened_result,flattened_labels)
-                    # return
-
-                    # print(len(gb),len(gb[0]),len(gb[0][0]))
-                    # print("++++++++++")
-
 
                     # return
                     for k in range(len(network.hidden_layer)+1):
-                        w_gradients[k]+= np.add(w_gradients[k],gw[k])
-                        b_gradients[k]+= np.add(b_gradients[k],gb[k])
+                        w_gradients[k] += gw[k]
+                        b_gradients[k] += gb[k]
 
-                    # if len(w_gradients) == 0:
-                    #     w_gradients = gw
-                    # else:
-                    #     # print("w_gradients")
-                    #     # # print(w_gradients)
-                    #     # print(len(w_gradients),len(w_gradients[0]))
-                    #     # print(len(gw),len(gw[0]))
-                    #     w_gradients = np.add(w_gradients,np.array(gw))
-                    # if len(b_gradients) == 0:
-                    #     b_gradients = gb
 
-                    # else:
-                    #     # print("b_gradients")
-                    #     # print(len(b_gradients),len(b_gradients[0]))
-                    #     # print(len(gb),len(gb[0]))
-
-                    #     b_gradients = np.add(b_gradients,gb)
-                    # print(len(w_gradients))
-                # print("******")
-                # print(len(w_gradients[0]))
-                # print(len(w_gradients[1]))
-                # print(len(w_gradients[2]))
-                # print("******")
-                # print(len(b_gradients[0]))
-                # print(len(b_gradients[1]))
-                # print(len(b_gradients[2]))
-
-                    # data_gradients.append(layer_gradients)
-                # network.weights = np.subtract(network.weights,np.multiply(learning_rate,np.multiply((1/len(batch)),w_gradients)))
-                # network.biases = np.subtract(network.biases,np.multiply(learning_rate,np.multiply((1/len(batch)),b_gradients)))
                 for k in range(0, len(network.hidden_layer)+1):
-                    # print(len(network.biases[k]),len(network.biases[k][0]))
-                    # print(len(b_gradients[k]),len(b_gradients[k][0]))
-                    network.weights[k] = np.subtract(network.weights[k],[element * learning_rate for element in list(np.multiply(w_gradients[k],(1/len(batch))))])
-                    network.biases[k] = np.subtract(network.biases[k],[element * learning_rate for element in list(np.multiply(b_gradients[k],(1/len(batch))))])
-                error.append(sum)
+                    network.weights[k] = network.weights[k] - (learning_rate * (w_gradients[k]/batch_size))
+                    network.biases[k] = network.biases[k] - (learning_rate * (b_gradients[k]/len(batch)))
+            error.append(sum/float(200))
                 # print("accuracy is {}%".format(network.print_accuracy(batch, results)*100/float(len(batch))))
-                # print("accuracy is {}%".format(network.print_accuracy(batch, label)/float(len(batch))))
 
-                # network.update_weights_and_biases(data_gradients, len(train_data), learning_rate)
+
             results = []
             for data in ts:
                 result = network.forward_propagation(data[0])
                 flattened  = [val for sublist in result for val in sublist]
                 results.append(flattened.index(max(flattened)))
-            print("accuracy is {}%".format(network.print_accuracy(ts, results)/float(2)))
 
-
-
-
+            print("*******accuracy is {}%".format(network.print_accuracy(ts, results)/float(2)))
     
-
-    # for data in train_data:
-    #     network.forward_propagation(np.reshape((data[0], data[1]), (2, 1)))
-    #     sum += (network.neuron_values[1][0] - data[2]) ** 2
-
-    # learning_rate = 0.43
-
-    # error = []
-    # for i in range(600):
-    #     data_gradients = []
-    #     sum = 0
-    #     for data in train_data:
-    #         network.forward_propagation(np.reshape((data[0], data[1]), (2, 1)))
-    #         sum += (network.neuron_values[1][0] - data[2]) ** 2
-    #         layer_gradients = network.backward_propagation(data)
-    #         data_gradients.append(layer_gradients)
-
-    #     error.append(sum)
-
-    #     network.update_weights_and_biases(data_gradients, len(train_data), learning_rate)
-
-    # plt.plot(range(len(error)), error)
-
-    # results = []
-    # for data in test_data:
-    #     result = network.forward_propagation(np.reshape((data[0], data[1]), (2, 1)))
-    #     results.append(result)
-
-    # print("accuracy is {}%".format(network.print_accuracy(test_data, results)))
-    # network.show_result(test_data, results)
-
-    # print(len(train_data[0][0]))
-    # print(train_data[0][0])
-
-    # network.show_result(test_data, results)
-
-
-
+        epoch_size = [x for x in range(epoch)]
+        plt.plot(epoch_size, error)
+        plt.savefig("1.png")
 if __name__ == "__main__":
     # print("hello")
     main(2)
