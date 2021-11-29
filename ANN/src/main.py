@@ -1,11 +1,10 @@
 
+from os import error
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import time
-from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
-
+import time
 import Loading_Datasets
 
 import random
@@ -80,10 +79,12 @@ class Network:
         sig = self.sigmoid(x)
         return sig * (1 - sig)
 
+    def sigmoid_prime_vic(self,x):        
+        return (np.exp(-x)/np.square(1 + np.exp(-x)))
+
     # determine the values of the next layer, based on the values of the current layer
     def feed_forward(self, a, i):
         if i == 0:
-            # print("+++++++")
             self.neuron_values.append(a)  # appending the values of the initialized input neurons
             self.z.append(a)
         if self.activation_function == "sigmoid":
@@ -112,7 +113,7 @@ class Network:
 
         
         return a
-#######################################################################
+
 
     def feed_backward(self, a, data, i, a_gradients=None):
         w_gradients = np.zeros(self.weights[i - 1].shape)
@@ -143,23 +144,7 @@ class Network:
         return gradients
 
 
-    def backward_propagation(self, data):
-        a = self.neuron_values
-        if len(self.hidden_layer) == 0:  # if there is no hidden layer
-            return self.backward_propagation_without_hidden_layer(a, data)
-        else:
-            return self.backward_propagation_with_hidden_layer(a, data)
 
-    def backward_propagation_without_hidden_layer(self, a, data):
-        return self.feed_backward(a, data, 1)
-
-    def backward_propagation_with_hidden_layer(self, a, data):
-        layer_gradients = []
-        a_gradients = None
-        for i in range(len(self.hidden_layer) + 1, 0, -1):
-            w_gradients, b_gradients, a_gradients = self.feed_backward(a, data, i, a_gradients)
-            layer_gradients.append((w_gradients, b_gradients))
-        return layer_gradients
 
     def backward_propagation_gradiant(self,data,result,label):
 
@@ -223,9 +208,6 @@ class Network:
 
 
 
-
-
-
     def backward_propagation_gradiant_Vectorization(self,data,result,label):
 
         gradient_w1 = np.zeros((self.hidden_layer[0], self.input_layer))
@@ -234,96 +216,45 @@ class Network:
         gradient_a2 = np.zeros((self.hidden_layer[1],1))
         gradient_a1 = np.zeros((self.hidden_layer[0],1))
         
+        resnum = np.array(result).reshape((len(result),1))
+        labelnum = np.array(label).reshape((len(label),1))
+        
         gradient_b1 = np.zeros((self.hidden_layer[0],1))
         gradient_b2 = np.zeros((self.hidden_layer[1],1))
         gradient_b3 = np.zeros((self.output_layer,1))
 
         for layer in range(len(self.hidden_layer)+1,0,-1):
             if layer == 1:
-                sigprim_z1 = []
-                for x in self.z[1]:
-                    sigprim_z1.append(self.sigmoid_prime(x[0]))
-                for m in range(self.hidden_layer[0]):
-                        gradient_b1[m,0] += gradient_a1[m,0] * sigprim_z1[m]
-
-                for m in range(self.hidden_layer[0]):
-                    for v in range(self.input_layer):
-                        gradient_w1[m][v] += gradient_b1[m,0] * self.neuron_values[0][v]
+                gradient_b1 += gradient_a1 * self.sigmoid_prime_vic(self.z[1])
+                
+                gradient_w1 += gradient_b1 @ np.transpose(self.neuron_values[0])
 
 
             if layer == 2:
-                sigprim_z2 = []
-                for x in self.z[2]:
-                    # print(x[0])
-                    sigprim_z2.append(self.sigmoid_prime(x[0]))
-                for k in range(self.hidden_layer[1]):
-                    gradient_b2[k,0] += gradient_a2[k,0] * sigprim_z2[k]
                 
-                for k in range(self.hidden_layer[1]):
-                    for m in range(self.hidden_layer[0]):
-                        gradient_w2[k, m] += gradient_b2[k,0] * self.neuron_values[1][m]
+                gradient_b2 += gradient_a2 * self.sigmoid_prime_vic(self.z[2])
 
-                for k in range(self.hidden_layer[0]):
-                    for j in range(self.hidden_layer[1]):
-                        gradient_a1[k,0] += gradient_b2[j,0] * self.weights[layer-1][j][k]
+                gradient_w2 += gradient_b2 @ np.transpose(self.neuron_values[1])
+
+                gradient_a1 += np.transpose(self.weights[layer-1]) @ gradient_b2    
 
 
             if layer == 3:
-                sigprim_z3 = []
-                for x in self.z[3]:
-                    sigprim_z3.append(self.sigmoid_prime(x[0]))
-                for j in range(self.output_layer):
-                    gradient_b3[j,0] += 2 * sigprim_z3[j] * (result[j] - label[j])
-                for j in range(self.output_layer):
-                    for k in range(self.hidden_layer[1]):
-                        gradient_w3[j, k] += gradient_b3[j,0] * self.neuron_values[2][k]
-                for k in range(self.hidden_layer[1]):
-                    for j in range(self.output_layer):
-                        gradient_a2[k,0] += gradient_b3[j,0] * self.weights[layer-1][j][k]
+
+                flattened  = [val for sublist in self.z[3] for val in sublist]
+                te = np.array(self.sigmoid_prime_vic(np.array(flattened))).reshape((len(flattened),1))
+                gradient_b3 += 2 * (resnum - labelnum) * te
+
+                gradient_w3 += gradient_b3 @ np.transpose(self.neuron_values[2])
+
+                gradient_a2 += np.transpose(self.weights[layer-1]) @ gradient_b3                    
+
+
 
         self.grad_w = [gradient_w1,gradient_w2,gradient_w3]
         self.grad_b = [gradient_b1,gradient_b2,gradient_b3]
         return self.grad_w,self.grad_b
 
-
-
-
-
-
-
-
-#######################################################################
-    def plot_single_point(self, point, a):
-        # # multi neuron output
-        # max = 0
-        # best_i = 0
-        # for i in range(len(a)):
-        #     if a[i] >= max:
-        #         max = a[i]
-        #         best_i = i
-        # plt.scatter(data[0], data[1], color=colors[best_i])
-
-        # single neuron output
-        if a[0] < 0.5:
-            color = 'r'
-        else:
-            color = 'b'
-        plt.scatter(point[0], point[1], color=color)
-
-    def show_result(self, points, results):
-        legend_elements = [
-            Line2D([0], [0], marker='o', color='w', label='c1 (red)', markerfacecolor='r', markersize=10),
-            Line2D([0], [0], marker='o', color='w', label='c2 (blue)', markerfacecolor='b', markersize=10),
-        ]
-        fig, ax = plt.subplots()
-
-        for point, result in zip(points, results):
-            self.plot_single_point(point, result)
-
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        ax.legend(handles=legend_elements, loc='lower right')
-        plt.show()
 
     def print_accuracy(self, test_data, results):
         score = 0
@@ -338,11 +269,7 @@ class Network:
 
 
 
-
-
-
-
-def main(part):
+def main(part,epoch,batch_size,learning_rate):
     print('Welcome to the Artificial Neural Network Classifier!')
     train_data , test_data = Loading_Datasets.loading_dataset()
     network = Network(102, [150,60], 4, "sigmoid")
@@ -358,19 +285,16 @@ def main(part):
         print("accuracy is {}%".format(network.print_accuracy(train_data[:200], results)/float(2)))
 
 
-    if part == 2:
-        epoch=10
-        batch_size=10
-        learning_rate=1
-        costs = []
-        ts = train_data[:200]
+    if part == 2 or part == 3 or part == 4:
+        ts = []
+        if part == 2 or part == 3:
+            ts = train_data[:200]
+        else :
+            ts = train_data
         error = []
 
         for i in range(epoch):
-            epoch_cost = 0
-            epoch_correct_res = 0
             random.shuffle(ts)  
-            # ts = train_data
             batched_train = [ts[j:j + batch_size] for j in range(0, len(ts), batch_size)]            
             print("*********************************************")
             sum = 0
@@ -390,19 +314,21 @@ def main(part):
                     label = flattened_labels.index(max(flattened_labels))
                     result = network.forward_propagation(data[0])
 
-                    # print("***")
 
                     flattened_result  = [val for sublist in result for val in sublist]
 
                     results.append(flattened_result.index(max(flattened_result)))
 
                     s = list(np.array(flattened_result) - np.array(flattened_labels))
-                    # print(s)
 
                     sum += (np.dot(s,s))
 
                     # result as list of one element in list
-                    gw,gb = network.backward_propagation_gradiant(data,flattened_result,flattened_labels)
+
+                    if part == 2:
+                        gw,gb = network.backward_propagation_gradiant(data,flattened_result,flattened_labels)
+                    else:    
+                        gw,gb = network.backward_propagation_gradiant_Vectorization(data,flattened_result,flattened_labels)
 
                     # return
                     for k in range(len(network.hidden_layer)+1):
@@ -413,8 +339,7 @@ def main(part):
                 for k in range(0, len(network.hidden_layer)+1):
                     network.weights[k] = network.weights[k] - (learning_rate * (w_gradients[k]/batch_size))
                     network.biases[k] = network.biases[k] - (learning_rate * (b_gradients[k]/len(batch)))
-            error.append(sum/float(200))
-                # print("accuracy is {}%".format(network.print_accuracy(batch, results)*100/float(len(batch))))
+            error.append(sum/float(len(ts)))
 
 
             results = []
@@ -423,11 +348,52 @@ def main(part):
                 flattened  = [val for sublist in result for val in sublist]
                 results.append(flattened.index(max(flattened)))
 
-            print("*******accuracy is {}%".format(network.print_accuracy(ts, results)/float(2)))
-    
+            print("*******accuracy is {}%".format(network.print_accuracy(ts, results)*100/float(len(ts))))
+
+
         epoch_size = [x for x in range(epoch)]
         plt.plot(epoch_size, error)
-        plt.savefig("1.png")
+        plt.savefig(("cost-diagram.png"))
+        plt.clf()
+
+        results = []
+        for data in train_data:
+            result = network.forward_propagation(data[0])
+            flattened  = [val for sublist in result for val in sublist]
+            results.append(flattened.index(max(flattened)))
+        print("Final Train Set Accuracy is {}%".format(network.print_accuracy(train_data, results)*100/float(len(train_data))))
+
+
+        results = []
+        for data in test_data:
+            result = network.forward_propagation(data[0])
+            flattened  = [val for sublist in result for val in sublist]
+            results.append(flattened.index(max(flattened)))
+        print("Final Test Set Accuracy is {}%".format(network.print_accuracy(test_data, results)*100/float(len(test_data))))        
+
+        return error
+
+
+
 if __name__ == "__main__":
-    # print("hello")
-    main(2)
+    '''
+    part = 1: feed forwarding for 200 of 1962 images (step 2)
+    part = 2: training 200 images without using the concept of Vectorization (step 3)
+    part = 3: training 200 images with using the concept of Vectorization (step 4)
+    part = 4: training 1962 images with using the concept of Vectorization (step 5)
+    '''
+    
+    ############################################# CONFIG. #################################################
+    start_time = time.time()
+    main(part=4,epoch=4,batch_size=32,learning_rate=1)
+
+    # lst = []
+    # for i in range(10):
+    #     errors = main(part=4,epoch=10,batch_size=10,learning_rate=1)
+    #     lst.append(sum(errors)/len(errors))
+    # times = [x for x in range(10)]
+    # plt.plot(times, lst)
+    # plt.savefig(("cost-diagram-avg.png"))
+
+    end_time = time.time()
+    print("Learning Process Time: "+str(end_time - start_time))        
