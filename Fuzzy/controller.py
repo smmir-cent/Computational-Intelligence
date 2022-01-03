@@ -5,11 +5,12 @@ from math import degrees
 
 # pyfuzzy imports
 from fuzzy.storage.fcl.Reader import Reader
-
+import re
 
 class FuzzyController:
 
     def __init__(self, fcl_path):
+        self.readRules()
         self.system = Reader().load_from_file(fcl_path)
 
 
@@ -48,8 +49,33 @@ class FuzzyController:
             cw_slow = 0.,
             stop = 0.,
             ccw_slow = 0.,
-            ccw_fast = 0.,
+            ccw_fast = 0.
         )
+
+
+    def _make_force(self):
+        return dict(
+            left_fast = 0.,
+            left_slow = 0.,
+            stop = 0.,
+            right_slow = 0.,
+            right_fast = 0.
+        )
+
+    def readRules(self):
+        self.and_rules = []
+        self.or_rules = []
+        with open('controllers\\rule_1.txt') as fp:
+            for line in fp:
+                x = re.search(r"(pa IS \w+)", line)
+                x2 = re.search(r"(pv IS \w+)", line)
+                x3 = re.search(r"(force IS \w+)", line)
+                if "AND" in line:
+                    self.and_rules.append([line[x.span()[0]+6:x.span()[1]],line[x2.span()[0]+6:x2.span()[1]],line[x3.span()[0]+9:x3.span()[1]]])
+                elif "OR" in line:
+                    self.or_rules.append([line[x.span()[0]+6:x.span()[1]],line[x2.span()[0]+6:x2.span()[1]],line[x3.span()[0]+9:x3.span()[1]]])
+                    
+        return
 
 
     def decide(self, world):
@@ -162,7 +188,14 @@ class FuzzyController:
 
 
     def rules(self,fuzzy_input):
-        return
+        force = self._make_force()
+        for and_rule in self.and_rules:
+            temp = min(fuzzy_input[0][and_rule[0]],fuzzy_input[1][and_rule[1]])
+            force[and_rule[2]] = max(temp,force[and_rule[2]]) 
+        for or_rule in self.and_rules:
+            temp = min(fuzzy_input[0][or_rule[0]],fuzzy_input[1][or_rule[1]])
+            force[or_rule[2]] = max(temp,force[or_rule[2]])              
+        return force
 
 
     def defuzzify_force(self,force):
@@ -171,7 +204,8 @@ class FuzzyController:
 
     def FES(self,input, output):
         fuzzy_input = self.fuzzify(input=input)
-        # force = self.rules(fuzzy_input=fuzzy_input)
+        force = self.rules(fuzzy_input=fuzzy_input)
+        print(force)
         # output['force'] = self.defuzzify_force(force=force)
         return
         
