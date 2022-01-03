@@ -6,7 +6,7 @@ from math import degrees
 # pyfuzzy imports
 from fuzzy.storage.fcl.Reader import Reader
 import re
-
+import numpy as np
 class FuzzyController:
 
     def __init__(self, fcl_path):
@@ -81,8 +81,9 @@ class FuzzyController:
     def decide(self, world):
         ##  {'pa': 89.39126135805252, 'cp': 3.2716264821233403, 'pv': 0.2775948553377683, 'cv': 0.148646592901583}
         output = self._make_output()
-        self.FES(self._make_input(world), output)
-        whose_function = 1 # 2 is my function
+        # self.FES(self._make_input(world), output)
+        # 2 is my function
+        whose_function = 2 
         if whose_function == 1: 
             self.system.calculate(self._make_input(world), output)
         elif whose_function == 2:
@@ -150,6 +151,9 @@ class FuzzyController:
     def pv_fuzzy(self,value):
         pv = self._make_pv()
         ## cw_fast
+        if value <-200 :
+            pv['cw_fast'] = 1
+
         if value > -200 and value < -100:
             pv['cw_fast'] = (-0.01) * value - 1
         
@@ -178,9 +182,60 @@ class FuzzyController:
         if value > 100 and value < 200:
             pv['ccw_fast'] = (0.01) * value - 1     
 
+        if value > 200  :
+            pv['ccw_fast'] = 1
+
         return pv
 
-    
+
+
+    def left_fast_force(self,value,threshold): 
+        if value > -100 and value < -60: 
+            if value <-80: 
+                return min(((0.05*value) + 5 ),threshold) 
+            else: 
+                return min(((-0.05*value) - 3),threshold)
+        return 0.
+
+
+    def left_slow_force(self,value,threshold): 
+        if value > -80 and value < 0: 
+            if value <-60: 
+                return min(((0.05*value) + 4),threshold)
+            else: 
+                return min((((float(-1)/60)*value)),threshold)
+        return 0.
+
+
+
+    def stop_force(self,value,threshold): 
+        if value > -60 and value < 60: 
+            if value < 0: 
+                return min((((float(1)/60)*value) + 1 ),threshold)
+            else: 
+                return min((((float(-1)/60)*value) + 1),threshold)
+        return 0.
+
+
+    def right_slow_force(self,value,threshold): 
+        if value > 0 and value < 80: 
+            if value < 60: 
+                return min((((float(1)/60)*value) + 5 ),threshold)
+            else: 
+                return min(((-0.05*value) + 4),threshold)
+        return 0.
+
+
+
+    def right_fast_force(self,value,threshold): 
+        if value > 60 and value < 100: 
+            if value < 80: 
+                return min(((0.05*value) - 3),threshold)
+            else: 
+                return min(((-0.05*value) + 5),threshold)
+        return 0.
+
+
     def fuzzify(self,input):
         input_pa = self.pa_fuzzy(input.get('pa'))
         input_pv = self.pv_fuzzy(input.get('pv'))
@@ -199,13 +254,28 @@ class FuzzyController:
 
 
     def defuzzify_force(self,force):
-        return
+        points = np.linspace(-100,100,50)
+        dx = points[1] - points[0]
+        sum = 0.
+        sum_2 = 0.
+        for point in points:
+            y = max(self.stop_force(point,force['stop']),self.left_fast_force(point,force['left_fast']),self.left_slow_force(point,force['left_slow']),self.right_slow_force(point,force['right_slow']),self.right_fast_force(point,force['right_fast']))
+            sum += (y*dx*point)
+            sum_2 +=  (y*dx)
+        print("sum = ")
+        print(sum)
+        print("sum_2 = ")
+        print(sum_2)
+        if sum == 0 or sum_2 == 0:
+            return 0.
+        return sum/sum_2
 
 
     def FES(self,input, output):
         fuzzy_input = self.fuzzify(input=input)
         force = self.rules(fuzzy_input=fuzzy_input)
-        print(force)
-        # output['force'] = self.defuzzify_force(force=force)
+        # self.defuzzify_force(force=force)
+        output['force'] = self.defuzzify_force(force=force)
+        print(output['force'])
         return
         
