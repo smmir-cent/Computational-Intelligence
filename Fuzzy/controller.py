@@ -62,6 +62,7 @@ class FuzzyController:
             right_fast = 0.
         )
 
+    # extract rules
     def readRules(self):
         self.and_rules = []
         self.or_rules = []
@@ -79,11 +80,9 @@ class FuzzyController:
 
 
     def decide(self, world):
-        ##  {'pa': 89.39126135805252, 'cp': 3.2716264821233403, 'pv': 0.2775948553377683, 'cv': 0.148646592901583}
         output = self._make_output()
-        # self.FES(self._make_input(world), output)
         # 2 is my function
-        whose_function = 2 
+        whose_function = 2
         if whose_function == 1: 
             self.system.calculate(self._make_input(world), output)
         elif whose_function == 2:
@@ -262,10 +261,7 @@ class FuzzyController:
             y = max(self.stop_force(point,force['stop']),self.left_fast_force(point,force['left_fast']),self.left_slow_force(point,force['left_slow']),self.right_slow_force(point,force['right_slow']),self.right_fast_force(point,force['right_fast']))
             sum += (y*dx*point)
             sum_2 +=  (y*dx)
-        print("sum = ")
-        print(sum)
-        print("sum_2 = ")
-        print(sum_2)
+
         if sum == 0 or sum_2 == 0:
             return 0.
         return sum/sum_2
@@ -274,8 +270,6 @@ class FuzzyController:
     def FES(self,input, output):
         fuzzy_input = self.fuzzify(input=input)
         force = self.rules(fuzzy_input=fuzzy_input)
-        # self.defuzzify_force(force=force)
         output['force'] = self.defuzzify_force(force=force)
-        print(output['force'])
         return
         
