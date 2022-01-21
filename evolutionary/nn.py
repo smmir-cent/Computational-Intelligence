@@ -11,7 +11,16 @@ class NeuralNetwork:
         3 neurons in the input layer, 10 neurons in the hidden layer, and 2 neurons in the output layer.
         """
         # TODO (Implement FCNNs architecture here)
-        pass
+        self.layer_sizes = layer_sizes
+        self.neuron_values = []
+        self.z = []
+        self.weights = []
+        self.biases = []
+        
+        for i in range(1,len(layer_sizes)):
+            self.weights.append(np.random.normal(size=(self.layer_sizes[i], self.layer_sizes[i-1])))
+            self.biases.append(np.zeros((self.layer_sizes[i],1)))
+        return
 
     def activation(self, x):
         """
@@ -20,7 +29,11 @@ class NeuralNetwork:
         :return: Vector after applying activation function.
         """
         # TODO (Implement activation function here)
-        pass
+        sig = True
+        if sig:
+            return 1/(1 + np.exp(-x))
+        else:
+            return np.maximum(x, 0)
 
     def forward(self, x):
         """
@@ -29,4 +42,8 @@ class NeuralNetwork:
         :return: Output vector
         """
         # TODO (Implement forward function here)
-        pass
+        inp = x
+        for i in layer_sizes:
+            z = (self.weights[i] @ inp) + self.biases[i]
+            inp = self.activation(z)
+        return inp
