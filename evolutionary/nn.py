@@ -16,7 +16,7 @@ class NeuralNetwork:
         self.z = []
         self.weights = []
         self.biases = []
-        
+        # print(f'layer_sizes = {len(layer_sizes)}')
         for i in range(1,len(layer_sizes)):
             self.weights.append(np.random.normal(size=(self.layer_sizes[i], self.layer_sizes[i-1])))
             self.biases.append(np.zeros((self.layer_sizes[i],1)))
@@ -43,7 +43,7 @@ class NeuralNetwork:
         """
         # TODO (Implement forward function here)
         inp = x
-        for i in layer_sizes:
+        for i in range(0,len(self.layer_sizes)-1):
             z = (self.weights[i] @ inp) + self.biases[i]
             inp = self.activation(z)
         return inp

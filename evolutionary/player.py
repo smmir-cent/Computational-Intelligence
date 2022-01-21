@@ -4,6 +4,7 @@ import pygame
 from variables import global_variables
 from nn import NeuralNetwork
 
+import numpy as np
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game_mode):
@@ -35,8 +36,34 @@ class Player(pygame.sprite.Sprite):
         if self.game_mode == "Neuroevolution":
             self.fitness = 0  # Initial fitness
 
-            layer_sizes = [3, 10, 2]  # TODO (Design your architecture here by changing the values)
+            layer_sizes = [11, 10, 2]  # TODO (Design your architecture here by changing the values)
             self.nn = NeuralNetwork(layer_sizes)
+
+
+    def get_input(self,screen_width, screen_height, obstacles, player_x, player_y):
+        ############################
+        # (5 nearest obstacles(x,y) = 10) + player_x 
+        ############################
+        inp = np.zeros((11,1))
+        counter = 0
+        print(obstacles)
+        for ob in obstacles[:5]:
+            inp[counter] += ob['x']
+            counter += 1
+            inp[counter] += ob['y']
+            counter += 1
+
+        while counter != 10 :
+            inp[counter] += -1
+            counter += 1
+            inp[counter] += -1
+            counter += 1
+
+        inp[counter] += float(player_x-177) / (347-177)
+        # counter += 1
+        # inp[counter] += player_y
+        return inp
+
 
     def think(self, screen_width, screen_height, obstacles, player_x, player_y):
         """
@@ -48,16 +75,30 @@ class Player(pygame.sprite.Sprite):
         the obstacle as the key. The list is sorted based on the obstacle's 'y' point on the screen. Hence, obstacles[0]
         is the nearest obstacle to our player. It is also worthwhile noting that 'y' range is in [-100, 656], such that
         -100 means it is off screen (Topmost point) and 656 means in parallel to our player's 'y' point.
-        :param player_x: 'x' position of the player
+        :param player_x: 'x' position of the player min: 177 max: 347
         :param player_y: 'y' position of the player
         """
         # TODO (change player's gravity here by calling self.change_gravity)
+        # print(f'x: {player_x} - y: {player_y}')
+        # if player_x < 177 :
+        #     print(player_x)
+        # if player_x > 347:
+        #     print("***** "+str(player_x))    
+        # print(obstacles)
+        
+        inp = self.get_input(screen_width, screen_height, obstacles, player_x, player_y)
+        output = self.nn.forward(inp)
+        print(output)
 
         # This is a test code that changes the gravity based on a random number. Remove it before your implementation.
-        if random.randint(0, 2):
+        if output[0][0] > output[1][0]:
             self.change_gravity('left')
         else:
             self.change_gravity('right')
+        # if random.randint(0, 2):
+        #     self.change_gravity('left')
+        # else:
+        #     self.change_gravity('right')
 
     def change_gravity(self, new_gravity):
         """
