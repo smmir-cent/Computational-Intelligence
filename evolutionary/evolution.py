@@ -16,6 +16,10 @@ class Evolution:
         :param num_players: number of players that we return
         """
         # TODO (Implement top-k algorithm here)
+        players = sorted(players, key=lambda x: x.fitness)
+        players.reverse()
+        # sorted_players = sorted_players
+
         # TODO (Additional: Implement roulette wheel here)
         # TODO (Additional: Implement SUS here)
 

@@ -46,8 +46,9 @@ class Player(pygame.sprite.Sprite):
         ############################
         inp = np.zeros((11,1))
         counter = 0
-        print(obstacles)
+        # print(obstacles)
         for ob in obstacles[:5]:
+            #TODO#: normalize ob['x'] and ob['y']
             inp[counter] += ob['x']
             counter += 1
             inp[counter] += ob['y']
@@ -88,7 +89,7 @@ class Player(pygame.sprite.Sprite):
         
         inp = self.get_input(screen_width, screen_height, obstacles, player_x, player_y)
         output = self.nn.forward(inp)
-        print(output)
+        # print(output)
 
         # This is a test code that changes the gravity based on a random number. Remove it before your implementation.
         if output[0][0] > output[1][0]:
