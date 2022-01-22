@@ -7,6 +7,7 @@ import random
 import numpy as np
 import math
 import redis
+from operator import attrgetter
 
 
 class Evolution:
@@ -35,6 +36,21 @@ class Evolution:
 
         return
 
+    def roulette_wheel_selection(self,players,num_players):
+        population_fitness = sum([player.fitness for player in players])
+        player_probabilities = [player.fitness/population_fitness for player in players]
+        return list(np.random.choice(players,num_players,p=player_probabilities))
+
+    def q_selection(self,players,num_players,q):
+        new_player = []
+        for i in range(0,num_players):
+            temp = list(np.random.choice(players,q))
+            # print(temp)
+            # print(temp[0])
+            max_attr = max(temp, key=attrgetter('fitness'))
+            new_player.append(max_attr)
+        return new_player
+
 
     def next_population_selection(self, players, num_players):
         """
@@ -45,13 +61,17 @@ class Evolution:
         :param num_players: number of players that we return
         """
         # TODO (Implement top-k algorithm here)
-        players = sorted(players, key=lambda x: x.fitness)
-        players.reverse()
+        rw_q_sus_sort = 2
+        if rw_q_sus_sort == 1:
+            players = self.roulette_wheel_selection(players,num_players)
+        elif rw_q_sus_sort == 2:
+            players = self.q_selection(players,num_players,3)
+        else:
+            players = sorted(players, key=lambda x: x.fitness)
+            players.reverse()
         # sorted_players = sorted_players
-
         # TODO (Additional: Implement roulette wheel here)
         # TODO (Additional: Implement SUS here)
-
         # TODO (Additional: Learning curve)
         avg = 0.0
         min_ = math.inf
@@ -86,11 +106,20 @@ class Evolution:
         else:
             # TODO ( Parent selection and child generation )
             # 1)
-            random.shuffle(prev_players)
             # 2)
             # prev_players = sorted(prev_players, key=lambda x: x.fitness)
             # prev_players.reverse()
             
+            rw_q_sus_sort = 2
+            if rw_q_sus_sort == 1:
+                prev_players = self.roulette_wheel_selection(prev_players,len(prev_players))
+            elif rw_q_sus_sort == 2:
+                prev_players = self.q_selection(prev_players,len(prev_players),2)
+            else:
+                random.shuffle(prev_players)
+
+
+
             counter = 0
             while counter != len(prev_players):
                 parent_1 = prev_players[counter]
