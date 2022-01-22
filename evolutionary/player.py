@@ -35,26 +35,28 @@ class Player(pygame.sprite.Sprite):
 
         if self.game_mode == "Neuroevolution":
             self.fitness = 0  # Initial fitness
-
-            layer_sizes = [11, 10, 2]  # TODO (Design your architecture here by changing the values)
+            obs = 4
+            layer_sizes = [obs*2+1, 23, 2]  # TODO (Design your architecture here by changing the values)
             self.nn = NeuralNetwork(layer_sizes)
 
 
-    def get_input(self,screen_width, screen_height, obstacles, player_x, player_y):
+    def get_input(self,screen_width, screen_height, obstacles, player_x, player_y,obs):
         ############################
-        # (5 nearest obstacles(x,y) = 10) + player_x 
+        # (obs nearest obstacles(x,y) ) + player_x 
         ############################
-        inp = np.zeros((11,1))
+        inp = np.zeros((obs*2+1,1))
         counter = 0
         # print(obstacles)
-        for ob in obstacles[:5]:
+        for ob in obstacles[:3]:
             #TODO#: normalize ob['x'] and ob['y']
-            inp[counter] += ob['x']
+            inp[counter] += float(ob['x']) / screen_width
+            # print(f'x: {inp[counter]}')
             counter += 1
-            inp[counter] += ob['y']
+            inp[counter] += float(ob['y'] + 100) / screen_height
+            # print(f'y: {inp[counter]}')
             counter += 1
 
-        while counter != 10 :
+        while counter != obs*2 :
             inp[counter] += -1
             counter += 1
             inp[counter] += -1
@@ -86,8 +88,8 @@ class Player(pygame.sprite.Sprite):
         # if player_x > 347:
         #     print("***** "+str(player_x))    
         # print(obstacles)
-        
-        inp = self.get_input(screen_width, screen_height, obstacles, player_x, player_y)
+        obs = 4
+        inp = self.get_input(screen_width, screen_height, obstacles, player_x, player_y,obs)
         output = self.nn.forward(inp)
         # print(output)
 
