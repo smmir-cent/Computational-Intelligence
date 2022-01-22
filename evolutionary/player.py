@@ -47,7 +47,7 @@ class Player(pygame.sprite.Sprite):
         inp = np.zeros((obs*2+1,1))
         counter = 0
         # print(obstacles)
-        for ob in obstacles[:3]:
+        for ob in obstacles[:obs]:
             #TODO#: normalize ob['x'] and ob['y']
             inp[counter] += float(ob['x']) / screen_width
             # print(f'x: {inp[counter]}')
